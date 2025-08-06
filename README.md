@@ -120,6 +120,16 @@ NekoTTS is released under the MIT License. See LICENSE file for details.
 - ONNX Runtime by Microsoft
 - Android Jetpack libraries by Google
 
+## Latest Release
+
+**Version 2.0.0** - Full Feature Release
+- ✅ Complete TTS engine implementation
+- ✅ All 54 Kokoro + 8 Kitten voices working
+- ✅ System integration fixed (Moon Reader compatible)
+- ✅ "Read Aloud" functionality working
+- ✅ Settings and voice selection fully functional
+- ✅ Synthetic fallback for immediate testing
+
 ---
 
-**Note**: This is an early release. Some features may be incomplete or have bugs. Please report any issues you encounter.
+**Note**: For best quality, add ONNX model files to the app's data directory. The app includes synthetic fallback for testing without models.

@@ -67,7 +67,7 @@ object AppSingletons {
     
     // Session Manager
     private val _ttsSessionManager: TTSSessionManager by lazy {
-        TTSSessionManager(requireContext(), _voiceRepository, _settingsRepository)
+        TTSSessionManager(requireContext())
     }
     
     /**

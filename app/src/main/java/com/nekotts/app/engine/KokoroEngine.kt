@@ -299,7 +299,7 @@ class KokoroEngine(
     private suspend fun synthesizeTextChunk(tokens: List<Int>, voiceEmbedding: FloatArray): FloatArray? = withContext(Dispatchers.IO) {
         try {
             val session = modelLoader.getKokoroSession() ?: return@withContext null
-            val ortEnv = modelLoader.getOrtEnvironment() ?: return@withContext null
+            val ortEnv = modelLoader.getEnvironment() ?: return@withContext null
             
             // Prepare input tensors
             val inputs = mutableMapOf<String, OnnxTensor>()

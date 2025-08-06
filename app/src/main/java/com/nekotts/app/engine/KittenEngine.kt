@@ -208,7 +208,7 @@ class KittenEngine(
     ): FloatArray? = withContext(Dispatchers.IO) {
         try {
             val session = modelLoader.getKittenSession() ?: return@withContext null
-            val ortEnv = modelLoader.getOrtEnvironment() ?: return@withContext null
+            val ortEnv = modelLoader.getEnvironment() ?: return@withContext null
             
             // Prepare input tensors
             val inputs = mutableMapOf<String, OnnxTensor>()

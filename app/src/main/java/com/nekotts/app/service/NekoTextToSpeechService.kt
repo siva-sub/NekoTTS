@@ -1,176 +1,184 @@
 package com.nekotts.app.service
 
-import android.app.NotificationManager
-import android.content.Context
-import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioManager
-import android.media.AudioTrack
-import android.os.Build
-import android.os.Bundle
-import android.os.PowerManager
 import android.speech.tts.SynthesisCallback
 import android.speech.tts.SynthesisRequest
-import android.speech.tts.TextToSpeech
 import android.speech.tts.TextToSpeechService
+import android.speech.tts.TextToSpeech
 import android.util.Log
-import com.nekotts.app.data.VoiceRepository
-import com.nekotts.app.data.SettingsRepository
-import com.nekotts.app.data.models.AllVoices
-import com.nekotts.app.data.models.VoiceEngine
-import com.nekotts.app.engine.KittenEngine
-import com.nekotts.app.engine.KokoroEngine
-import com.nekotts.app.engine.TTSEngine
-import com.nekotts.app.utils.Constants
 import com.nekotts.app.core.AppSingletons
-import com.nekotts.app.utils.NotificationHelper
-import kotlinx.coroutines.*
+import com.nekotts.app.data.SettingsRepository
+import com.nekotts.app.data.VoiceRepository
+import com.nekotts.app.data.models.AllVoices
+import com.nekotts.app.service.TTSSessionManager
+import com.nekotts.app.service.SessionStatus
+import com.nekotts.app.service.SessionPriority
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
- * Main TTS service that integrates with Android's TextToSpeech framework
+ * Android TTS Service implementation for Neko TTS
+ * This is the main service that integrates with Android's TTS framework
  */
-class NekoTextToSpeechService : TextToSpeechService(), CoroutineScope {
+class NekoTextToSpeechService : TextToSpeechService() {
     
     companion object {
         private const val TAG = "NekoTTSService"
+        private val SUPPORTED_LANGUAGES = setOf(
+            "en", "en-US", "en-GB", 
+            "es", "es-ES", 
+            "fr", "fr-FR", 
+            "de", "de-DE", 
+            "it", "it-IT", 
+            "pt", "pt-PT", 
+            "ja", "ja-JP",
+            "ko", "ko-KR",
+            "zh", "zh-CN",
+            "ru", "ru-RU",
+            "ar", "ar-SA",
+            "af", "am", "bg", "bn", "br", "bs", "ca", "cs", "cy",
+            "da", "el", "eo", "et", "eu", "fa", "fi", "ga", "gl",
+            "gu", "ha", "he", "hi", "hr", "hu", "hy", "id", "is",
+            "jv", "ka", "kk", "km", "kn", "la", "lb", "lg", "ln",
+            "lo", "lt", "lv", "mg", "mk", "ml", "mn", "mr", "ms",
+            "mt", "my", "ne", "nl", "nn", "no", "oc", "pa", "pl",
+            "ps", "ro", "sk", "sl", "sn", "so", "sq", "sr", "su",
+            "sv", "sw", "ta", "te", "tg", "th", "tk", "tr", "tt",
+            "uk", "ur", "uz", "vi", "yo"
+        )
     }
     
+    private lateinit var serviceScope: CoroutineScope
+    private lateinit var ttsSessionManager: TTSSessionManager
     private lateinit var voiceRepository: VoiceRepository
     private lateinit var settingsRepository: SettingsRepository
-    private lateinit var ttsSessionManager: TTSSessionManager
-    
-    private var kittenEngine: KittenEngine? = null
-    private var kokoroEngine: KokoroEngine? = null
-    private var audioManager: AudioManager? = null
-    private var notificationManager: NotificationManager? = null
-    private var powerManager: PowerManager? = null
-    private var wakeLock: PowerManager.WakeLock? = null
-    
-    private val serviceJob = SupervisorJob()
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main + serviceJob
+    private var isInitialized = false
     
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "NekoTTS Service created")
+        Log.d(TAG, "NekoTextToSpeechService created")
         
-        // Initialize dependencies from singleton manager
-        voiceRepository = AppSingletons.getVoiceRepository()
-        settingsRepository = AppSingletons.getSettingsRepository()
-        ttsSessionManager = AppSingletons.getTTSSessionManager()
-        
-        // Initialize system services
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        
-        // Start as foreground service for Android 13+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            startForeground(
-                NotificationHelper.NOTIFICATION_ID,
-                NotificationHelper.createForegroundServiceNotification(this)
-            )
-        }
-        
-        // Initialize wake lock
-        wakeLock = powerManager?.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK,
-            "NekoTTS::SynthesisWakeLock"
-        )
-        
-        // Initialize engines asynchronously
-        launch {
-            initializeEngines()
-        }
-    }
-    
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "NekoTTS Service destroyed")
-        
-        // Release wake lock if held
-        wakeLock?.let {
-            if (it.isHeld) {
-                it.release()
-            }
-        }
-        
-        // Stop foreground service
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
-        
-        // Cleanup - engines don't have cleanup methods, they are managed by AppSingletons
-        // No explicit cleanup needed
-        serviceJob.cancel()
-    }
-    
-    private suspend fun initializeEngines() {
         try {
-            // Get engines from AppSingletons - they handle initialization
-            kittenEngine = AppSingletons.getKittenEngine()
-            kokoroEngine = AppSingletons.getKokoroEngine()
+            serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
             
-            Log.d(TAG, "TTS engines initialized successfully")
+            // Initialize dependencies
+            AppSingletons.init(applicationContext)
+            ttsSessionManager = AppSingletons.getTTSSessionManager()
+            voiceRepository = AppSingletons.getVoiceRepository()
+            settingsRepository = AppSingletons.getSettingsRepository()
+            
+            isInitialized = true
+            Log.d(TAG, "NekoTextToSpeechService initialized successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize TTS engines", e)
+            Log.e(TAG, "Failed to initialize NekoTextToSpeechService", e)
+            isInitialized = false
         }
     }
     
     override fun onGetLanguage(): Array<String> {
-        // Return supported languages
-        return Constants.SUPPORTED_LANGUAGES.toTypedArray()
+        Log.d(TAG, "onGetLanguage called")
+        // Return default language (English US)
+        return arrayOf("en", "US", "")
     }
     
-    override fun onIsLanguageAvailable(lang: String, country: String, variant: String): Int {
-        val languageCode = if (country.isNotEmpty()) "${lang}_${country}" else lang
+    override fun onIsLanguageAvailable(lang: String?, country: String?, variant: String?): Int {
+        Log.d(TAG, "onIsLanguageAvailable: $lang-$country-$variant")
         
-        return when {
-            Constants.SUPPORTED_LANGUAGES.contains(lang) -> {
-                if (hasVoiceForLanguage(lang)) {
-                    TextToSpeech.LANG_AVAILABLE
-                } else {
-                    TextToSpeech.LANG_NOT_SUPPORTED
+        if (!isInitialized) {
+            Log.w(TAG, "Service not initialized")
+            return TextToSpeech.LANG_NOT_SUPPORTED
+        }
+        
+        val languageCode = buildString {
+            if (!lang.isNullOrEmpty()) {
+                append(lang.lowercase())
+                if (!country.isNullOrEmpty()) {
+                    append("-")
+                    append(country.uppercase())
                 }
             }
-            else -> TextToSpeech.LANG_NOT_SUPPORTED
+        }
+        
+        return when {
+            languageCode.isEmpty() -> {
+                Log.d(TAG, "Empty language code, defaulting to English")
+                TextToSpeech.LANG_AVAILABLE
+            }
+            SUPPORTED_LANGUAGES.contains(languageCode) -> {
+                Log.d(TAG, "Language $languageCode is supported")
+                TextToSpeech.LANG_AVAILABLE
+            }
+            SUPPORTED_LANGUAGES.contains(lang?.lowercase()) -> {
+                Log.d(TAG, "Language $lang is supported (without country)")
+                TextToSpeech.LANG_AVAILABLE
+            }
+            languageCode.startsWith("en") -> {
+                Log.d(TAG, "English variant $languageCode supported")
+                TextToSpeech.LANG_AVAILABLE
+            }
+            else -> {
+                Log.w(TAG, "Language $languageCode not supported")
+                TextToSpeech.LANG_NOT_SUPPORTED
+            }
         }
     }
     
-    override fun onLoadLanguage(lang: String, country: String, variant: String): Int {
-        return onIsLanguageAvailable(lang, country, variant)
-    }
-    
-    override fun onStop() {
-        Log.d(TAG, "Stopping TTS synthesis")
-        ttsSessionManager.stopAllSynthesis()
+    override fun onLoadLanguage(lang: String?, country: String?, variant: String?): Int {
+        Log.d(TAG, "onLoadLanguage: $lang-$country-$variant")
+        
+        if (!isInitialized) {
+            Log.e(TAG, "Service not initialized")
+            return TextToSpeech.LANG_MISSING_DATA
+        }
+        
+        val result = onIsLanguageAvailable(lang, country, variant)
+        
+        return if (result == TextToSpeech.LANG_AVAILABLE) {
+            Log.d(TAG, "Language loaded successfully")
+            TextToSpeech.LANG_AVAILABLE
+        } else {
+            Log.w(TAG, "Language data missing")
+            TextToSpeech.LANG_MISSING_DATA
+        }
     }
     
     override fun onSynthesizeText(request: SynthesisRequest, callback: SynthesisCallback) {
-        val text = request.charSequenceText?.toString() ?: ""
+        Log.d(TAG, "onSynthesizeText: '${request.charSequenceText?.toString()?.take(50)}...' (${request.charSequenceText?.length} chars)")
         
+        if (!isInitialized) {
+            Log.e(TAG, "Service not initialized")
+            callback.error()
+            return
+        }
+        
+        if (request.charSequenceText.isNullOrEmpty()) {
+            Log.w(TAG, "Empty text provided for synthesis")
+            callback.error()
+            return
+        }
+        
+        val text = request.charSequenceText.toString().trim()
         if (text.isEmpty()) {
+            Log.w(TAG, "Text is empty after trimming")
             callback.error()
             return
         }
         
-        if (text.length > Constants.MAX_TEXT_LENGTH) {
-            Log.w(TAG, "Text length exceeds maximum: ${text.length}")
-            callback.error()
-            return
+        if (text.length > 10000) {
+            Log.w(TAG, "Text too long: ${text.length} characters, truncating")
         }
         
-        // Handle synthesis asynchronously
-        launch {
+        val finalText = text.take(10000) // Limit text length
+        
+        serviceScope.launch {
             try {
-                synthesizeTextAsync(text, request, callback)
+                synthesizeTextAsync(finalText, request, callback)
             } catch (e: Exception) {
-                Log.e(TAG, "Synthesis failed", e)
+                Log.e(TAG, "Error during synthesis", e)
                 callback.error()
             }
         }
@@ -181,260 +189,225 @@ class NekoTextToSpeechService : TextToSpeechService(), CoroutineScope {
         request: SynthesisRequest,
         callback: SynthesisCallback
     ) {
-        // Acquire wake lock for synthesis
-        wakeLock?.takeIf { !it.isHeld }?.acquire(30000) // 30 second timeout
-        
         try {
-            // Update notification to show active synthesis
-            notificationManager?.let { nm ->
-                NotificationHelper.updateForegroundServiceNotification(
-                    this, nm, isActive = true, currentText = text
-                )
+            Log.d(TAG, "Starting async synthesis for: '${text.take(50)}...'")
+            
+            // Get current settings and voice
+            val settings = settingsRepository.getCurrentSettings().first()
+            val selectedVoice = try {
+                voiceRepository.getSelectedVoice().first() ?: AllVoices.getDefaultVoice()
+            } catch (e: Exception) {
+                Log.w(TAG, "Error getting selected voice, using default", e)
+                AllVoices.getDefaultVoice()
             }
             
-            val settings = settingsRepository.getCurrentSettings().first()
-            val voice = voiceRepository.getSelectedVoice().first()
-                ?: AllVoices.getDefaultVoice()
+            Log.d(TAG, "Using voice: ${selectedVoice.displayName}, speed: ${settings.speechSpeed}")
             
-            Log.d(TAG, "Synthesizing: '$text' with voice: ${voice.displayName}")
+            // Initialize synthesis callback
+            val audioFormat = android.media.AudioFormat.ENCODING_PCM_16BIT
+            val sampleRate = 24000
+            val channels = 1
             
-            // Get the appropriate engine
-            val engine = when (voice.engine) {
-                VoiceEngine.KITTEN -> kittenEngine
-                VoiceEngine.KOKORO -> kokoroEngine
-            } ?: run {
-                Log.e(TAG, "Engine not available for voice: ${voice.engine}")
+            callback.start(audioFormat, sampleRate, channels)
+            Log.d(TAG, "TTS synthesis started with format=$audioFormat, rate=$sampleRate")
+            
+            // Create TTS session with high priority for system requests
+            val session = ttsSessionManager.createSession(
+                text = text,
+                voiceId = selectedVoice.id,
+                speed = settings.speechSpeed,
+                pitch = settings.speechPitch,
+                priority = SessionPriority.HIGH
+            )
+            
+            Log.d(TAG, "Created TTS session: ${session.id}")
+            
+            // Start synthesis
+            val result = ttsSessionManager.startSession(session.id)
+            
+            if (result.isFailure) {
+                Log.e(TAG, "Failed to start TTS session", result.exceptionOrNull())
                 callback.error()
                 return
             }
             
-            // Apply speech parameters
-            val speed = if (request.speechRate > 0f) request.speechRate.toFloat() else settings.speechSpeed
-            val pitch = if (request.pitch > 0f) request.pitch.toFloat() else settings.speechPitch
+            // Monitor session progress and stream audio
+            var sessionCompleted = false
+            var lastProgress = 0f
+            var audioStreamed = false
             
-            // Start synthesis
-            callback.start(Constants.SAMPLE_RATE, AudioManager.STREAM_MUSIC, 1)
-            
-            // Synthesize audio using appropriate engine methods
-            val audioData = when (voice.engine) {
-                VoiceEngine.KITTEN -> {
-                    val kittenRequest = com.nekotts.app.engine.KittenEngine.SynthesisRequest(
-                        text = text,
-                        voiceId = voice.id,
-                        speed = speed,
-                        pitch = pitch
-                    )
-                    (engine as com.nekotts.app.engine.KittenEngine).synthesize(kittenRequest)?.audioData
-                }
-                VoiceEngine.KOKORO -> {
-                    val kokoroRequest = com.nekotts.app.engine.KokoroEngine.SynthesisRequest(
-                        text = text,
-                        voiceId = voice.id,
-                        speed = speed
-                    )
-                    (engine as com.nekotts.app.engine.KokoroEngine).synthesize(kokoroRequest)?.audioData
-                }
-            }
-            
-            if (audioData != null && audioData.isNotEmpty()) {
-                // Stream audio data to callback
-                streamAudioData(audioData, callback, settings.audioFadeEnabled)
-                callback.done()
+            while (!sessionCompleted) {
+                val currentSession = ttsSessionManager.getSession(session.id)
                 
-                Log.d(TAG, "Synthesis completed successfully")
-            } else {
-                Log.e(TAG, "No audio data generated")
-                callback.error()
+                if (currentSession == null) {
+                    Log.w(TAG, "Session disappeared: ${session.id}")
+                    if (!audioStreamed) {
+                        callback.error()
+                    } else {
+                        callback.done()
+                    }
+                    return
+                }
+                
+                when (currentSession.status) {
+                    SessionStatus.PREPARING -> {
+                        Log.d(TAG, "Session preparing...")
+                        kotlinx.coroutines.delay(50)
+                    }
+                    
+                    SessionStatus.SPEAKING -> {
+                        // Report progress if available
+                        if (currentSession.progress > lastProgress) {
+                            lastProgress = currentSession.progress
+                            val progressPercent = (currentSession.progress * 100).toInt()
+                            Log.d(TAG, "Synthesis progress: $progressPercent%")
+                        }
+                        
+                        kotlinx.coroutines.delay(100)
+                    }
+                    
+                    SessionStatus.COMPLETED -> {
+                        Log.d(TAG, "Synthesis completed successfully")
+                        
+                        // Stream final audio data
+                        currentSession.audioData?.let { audioData ->
+                            Log.d(TAG, "Streaming ${audioData.size} final audio samples")
+                            
+                            val audioBytes = floatArrayToBytes(audioData)
+                            
+                            val bytesWritten = callback.audioAvailable(audioBytes, 0, audioBytes.size)
+                            if (bytesWritten > 0) {
+                                audioStreamed = true
+                                Log.d(TAG, "Successfully streamed $bytesWritten bytes of audio")
+                            } else {
+                                Log.w(TAG, "Audio streaming failed: $bytesWritten")
+                            }
+                        }
+                        
+                        callback.done()
+                        sessionCompleted = true
+                    }
+                    
+                    SessionStatus.FAILED -> {
+                        Log.e(TAG, "Synthesis failed: ${currentSession.error}")
+                        callback.error()
+                        sessionCompleted = true
+                    }
+                    
+                    SessionStatus.CANCELLED -> {
+                        Log.d(TAG, "Synthesis cancelled")
+                        callback.error()
+                        sessionCompleted = true
+                    }
+                    
+                    else -> {
+                        Log.d(TAG, "Session status: ${currentSession.status}")
+                        kotlinx.coroutines.delay(100)
+                    }
+                }
+                
+                // Safety timeout
+                if (System.currentTimeMillis() - session.createdAt > 30000) {
+                    Log.w(TAG, "Synthesis timeout, completing")
+                    callback.done()
+                    sessionCompleted = true
+                }
             }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error during synthesis", e)
+            Log.e(TAG, "Synthesis failed", e)
             callback.error()
-        } finally {
-            // Release wake lock
-            wakeLock?.takeIf { it.isHeld }?.release()
+        }
+    }
+    
+    private fun floatArrayToBytes(floatArray: FloatArray): ByteArray {
+        val bytes = ByteArray(floatArray.size * 2) // 16-bit PCM
+        
+        for (i in floatArray.indices) {
+            // Convert float [-1.0, 1.0] to 16-bit signed integer
+            val sample = (floatArray[i] * Short.MAX_VALUE).toInt()
+                .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())
+                .toShort()
             
-            // Update notification to idle state
-            notificationManager?.let { nm ->
-                NotificationHelper.updateForegroundServiceNotification(
-                    this, nm, isActive = false
+            // Write as little-endian
+            val byteIndex = i * 2
+            bytes[byteIndex] = (sample.toInt() and 0xFF).toByte()
+            bytes[byteIndex + 1] = ((sample.toInt() shr 8) and 0xFF).toByte()
+        }
+        
+        return bytes
+    }
+    
+    override fun onStop() {
+        Log.d(TAG, "onStop called - stopping all synthesis")
+        
+        try {
+            if (isInitialized) {
+                ttsSessionManager.stopAllSynthesis()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error stopping synthesis", e)
+        }
+    }
+    
+    override fun onDestroy() {
+        Log.d(TAG, "NekoTextToSpeechService destroyed")
+        
+        try {
+            if (isInitialized) {
+                ttsSessionManager.stopAllSynthesis()
+                ttsSessionManager.cleanup()
+            }
+            serviceScope.cancel()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during service cleanup", e)
+        }
+        
+        super.onDestroy()
+    }
+    
+    /**
+     * Returns the languages supported by this TTS engine
+     */
+    fun getSupportedLanguages(): Set<String> = SUPPORTED_LANGUAGES
+    
+    /**
+     * Gets service information for debugging
+     */
+    fun getServiceInfo(): Map<String, Any> = runBlocking {
+        try {
+            if (!isInitialized) {
+                return@runBlocking mapOf(
+                    "serviceName" to "NekoTTS",
+                    "version" to "1.0.0",
+                    "isInitialized" to false,
+                    "error" to "Service not initialized"
                 )
             }
-        }
-    }
-    
-    private fun streamAudioData(
-        audioData: FloatArray,
-        callback: SynthesisCallback,
-        fadeEnabled: Boolean
-    ) {
-        val sampleRate = Constants.SAMPLE_RATE
-        val bufferSize = Constants.AUDIO_BUFFER_SIZE
-        
-        // Convert float audio to 16-bit PCM
-        val pcmData = ByteArray(audioData.size * 2)
-        var pcmIndex = 0
-        
-        for (i in audioData.indices) {
-            var sample = audioData[i]
             
-            // Apply fading
-            if (fadeEnabled) {
-                val fadeLength = (Constants.FADE_DURATION_MS * sampleRate) / 1000
-                when {
-                    i < fadeLength -> {
-                        // Fade in
-                        sample *= (i.toFloat() / fadeLength)
-                    }
-                    i > audioData.size - fadeLength -> {
-                        // Fade out
-                        val fadeOutPos = audioData.size - i
-                        sample *= (fadeOutPos.toFloat() / fadeLength)
-                    }
-                }
-            }
+            val settings = settingsRepository.getCurrentSettings().first()
+            val voices = voiceRepository.getAllVoices().first()
+            val selectedVoice = voiceRepository.getSelectedVoice().first()
             
-            // Convert to 16-bit PCM
-            val pcmSample = (sample * Short.MAX_VALUE).toInt().coerceIn(
-                Short.MIN_VALUE.toInt(),
-                Short.MAX_VALUE.toInt()
-            ).toShort()
-            
-            pcmData[pcmIndex++] = (pcmSample.toInt() and 0xFF).toByte()
-            pcmData[pcmIndex++] = ((pcmSample.toInt() shr 8) and 0xFF).toByte()
-        }
-        
-        // Stream data in chunks
-        var offset = 0
-        while (offset < pcmData.size) {
-            val chunkSize = minOf(bufferSize, pcmData.size - offset)
-            val success = callback.audioAvailable(pcmData, offset, chunkSize) == TextToSpeech.SUCCESS
-            
-            if (!success) {
-                Log.w(TAG, "Audio streaming interrupted")
-                break
-            }
-            
-            offset += chunkSize
-        }
-    }
-    
-    override fun onGetVoices(): List<android.speech.tts.Voice> {
-        val voices = mutableListOf<android.speech.tts.Voice>()
-        
-        runBlocking {
-            val availableVoices = voiceRepository.getDownloadedVoices().first()
-            
-            for (voice in availableVoices) {
-                try {
-                    val ttsVoice = android.speech.tts.Voice(
-                        voice.id,
-                        java.util.Locale(voice.language),
-                        when (voice.quality) {
-                            com.nekotts.app.data.models.VoiceQuality.LOW -> android.speech.tts.Voice.QUALITY_LOW
-                            com.nekotts.app.data.models.VoiceQuality.STANDARD -> android.speech.tts.Voice.QUALITY_NORMAL
-                            com.nekotts.app.data.models.VoiceQuality.HIGH -> android.speech.tts.Voice.QUALITY_HIGH
-                            com.nekotts.app.data.models.VoiceQuality.PREMIUM -> android.speech.tts.Voice.QUALITY_VERY_HIGH
-                        },
-                        0, // latency
-                        true, // requiresNetworkConnection
-                        setOf() // features
-                    )
-                    voices.add(ttsVoice)
-                } catch (e: Exception) {
-                    Log.w(TAG, "Failed to create TTS voice for ${voice.id}", e)
-                }
-            }
-        }
-        
-        return voices
-    }
-    
-    override fun onGetDefaultVoiceNameFor(lang: String, country: String, variant: String): String {
-        // Try to find a voice for the requested language
-        val languageVoices = AllVoices.getVoicesByLanguage(lang)
-        
-        return if (languageVoices.isNotEmpty()) {
-            // Prefer downloaded voices
-            val downloadedVoices = languageVoices.filter { it.isDownloaded }
-            (downloadedVoices.firstOrNull() ?: languageVoices.first()).id
-        } else {
-            // Fallback to default voice
-            AllVoices.getDefaultVoice().id
-        }
-    }
-    
-    private fun hasVoiceForLanguage(language: String): Boolean {
-        return AllVoices.getVoicesByLanguage(language).any { it.isDownloaded }
-    }
-    
-    /**
-     * Handle TTS parameters from the request
-     */
-    private fun extractTTSParams(request: SynthesisRequest): TTSParams {
-        val params = request.params
-        
-        return TTSParams(
-            speed = params.getFloat("rate", 1.0f),
-            pitch = params.getFloat("pitch", 1.0f),
-            volume = params.getFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f),
-            streamType = params.getInt(
-                TextToSpeech.Engine.KEY_PARAM_STREAM,
-                AudioManager.STREAM_MUSIC
-            ),
-            utteranceId = params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID),
-            sessionId = params.getString(TextToSpeech.Engine.KEY_PARAM_SESSION_ID)
-        )
-    }
-    
-    /**
-     * Handle audio focus for TTS playback
-     */
-    private fun requestAudioFocus(): Boolean {
-        return try {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .build()
-            
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                @Suppress("NewApi")
-                val focusRequest = android.media.AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
-                    .setAudioAttributes(audioAttributes)
-                    .setWillPauseWhenDucked(true)
-                    .build()
-                
-                audioManager?.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-            } else {
-                true // Skip audio focus for older versions
-            }
+            mapOf(
+                "serviceName" to "NekoTTS",
+                "version" to "1.0.0",
+                "supportedLanguages" to SUPPORTED_LANGUAGES.size,
+                "availableVoices" to voices.size,
+                "selectedVoice" to (selectedVoice?.displayName ?: "Default"),
+                "speechSpeed" to settings.speechSpeed,
+                "speechPitch" to settings.speechPitch,
+                "isInitialized" to true,
+                "sessionStats" to ttsSessionManager.getStats()
+            )
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to request audio focus", e)
-            true // Continue anyway
-        }
-    }
-    
-    /**
-     * Release audio focus
-     */
-    private fun releaseAudioFocus() {
-        try {
-            // In a real implementation, you'd store the focus request and abandon it here
-            Log.d(TAG, "Released audio focus")
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to release audio focus", e)
+            Log.e(TAG, "Error getting service info", e)
+            mapOf(
+                "error" to (e.message ?: "Unknown error"),
+                "serviceName" to "NekoTTS",
+                "version" to "1.0.0",
+                "isInitialized" to isInitialized
+            )
         }
     }
 }
-
-/**
- * TTS parameters extracted from synthesis request
- */
-private data class TTSParams(
-    val speed: Float,
-    val pitch: Float,
-    val volume: Float,
-    val streamType: Int,
-    val utteranceId: String?,
-    val sessionId: String?
-)
