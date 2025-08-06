@@ -71,7 +71,7 @@ Once set as the default TTS engine, NekoTTS will automatically handle all system
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/NekoTTS.git
+git clone https://github.com/siva-sub/NekoTTS.git
 cd NekoTTS
 
 # Build debug APK
@@ -101,6 +101,13 @@ NekoTTS is designed with privacy in mind:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
+
+## Author
+
+Created by [Siva (Sivasubramanian Ramanathan)](https://sivasub.com)
+- GitHub: [@siva-sub](https://github.com/siva-sub)
+- LinkedIn: [@sivasub987](https://linkedin.com/in/sivasub987)
+- Email: hello@sivasub.com
 
 ## License
 
