@@ -1,0 +1,170 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.NekoTTS" parent="Theme.Material3.DayNight">
+        <!-- Neko TTS Light Theme Colors -->
+        <item name="colorPrimary">@color/neko_light_primary</item>
+        <item name="colorOnPrimary">@color/neko_light_on_primary</item>
+        <item name="colorPrimaryContainer">@color/neko_light_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/neko_light_on_primary_container</item>
+        
+        <item name="colorSecondary">@color/neko_light_secondary</item>
+        <item name="colorOnSecondary">@color/neko_light_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/neko_light_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/neko_light_on_secondary_container</item>
+        
+        <item name="colorTertiary">@color/neko_light_tertiary</item>
+        <item name="colorOnTertiary">@color/neko_light_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/neko_light_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/neko_light_on_tertiary_container</item>
+        
+        <item name="colorError">@color/neko_light_error</item>
+        <item name="colorOnError">@color/neko_light_on_error</item>
+        <item name="colorErrorContainer">@color/neko_light_error_container</item>
+        <item name="colorOnErrorContainer">@color/neko_light_on_error_container</item>
+        
+        <item name="android:colorBackground">@color/neko_light_background</item>
+        <item name="colorOnBackground">@color/neko_light_on_background</item>
+        <item name="colorSurface">@color/neko_light_surface</item>
+        <item name="colorOnSurface">@color/neko_light_on_surface</item>
+        
+        <item name="colorSurfaceVariant">@color/neko_light_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/neko_light_on_surface_variant</item>
+        <item name="colorOutline">@color/neko_light_outline</item>
+        
+        <!-- Status bar and navigation bar -->
+        <item name="android:statusBarColor">@color/neko_light_primary</item>
+        <item name="android:navigationBarColor">@color/neko_light_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        
+        <!-- Material shapes -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.NekoTTS.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.NekoTTS.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.NekoTTS.LargeComponent</item>
+        
+        <!-- Typography -->
+        <item name="textAppearanceHeadline1">@style/TextAppearance.NekoTTS.Headline1</item>
+        <item name="textAppearanceHeadline2">@style/TextAppearance.NekoTTS.Headline2</item>
+        <item name="textAppearanceHeadline3">@style/TextAppearance.NekoTTS.Headline3</item>
+        <item name="textAppearanceHeadline4">@style/TextAppearance.NekoTTS.Headline4</item>
+        <item name="textAppearanceHeadline5">@style/TextAppearance.NekoTTS.Headline5</item>
+        <item name="textAppearanceHeadline6">@style/TextAppearance.NekoTTS.Headline6</item>
+    </style>
+
+    <style name="Theme.NekoTTS" parent="Base.Theme.NekoTTS" />
+
+    <!-- Dark theme variant -->
+    <style name="Base.Theme.NekoTTS.Dark" parent="Theme.Material3.DayNight">
+        <!-- Neko TTS Dark Theme Colors -->
+        <item name="colorPrimary">@color/neko_dark_primary</item>
+        <item name="colorOnPrimary">@color/neko_dark_on_primary</item>
+        <item name="colorPrimaryContainer">@color/neko_dark_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/neko_dark_on_primary_container</item>
+        
+        <item name="colorSecondary">@color/neko_dark_secondary</item>
+        <item name="colorOnSecondary">@color/neko_dark_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/neko_dark_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/neko_dark_on_secondary_container</item>
+        
+        <item name="colorTertiary">@color/neko_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/neko_dark_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/neko_dark_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/neko_dark_on_tertiary_container</item>
+        
+        <item name="colorError">@color/neko_dark_error</item>
+        <item name="colorOnError">@color/neko_dark_on_error</item>
+        <item name="colorErrorContainer">@color/neko_dark_error_container</item>
+        <item name="colorOnErrorContainer">@color/neko_dark_on_error_container</item>
+        
+        <item name="android:colorBackground">@color/neko_dark_background</item>
+        <item name="colorOnBackground">@color/neko_dark_on_background</item>
+        <item name="colorSurface">@color/neko_dark_surface</item>
+        <item name="colorOnSurface">@color/neko_dark_on_surface</item>
+        
+        <item name="colorSurfaceVariant">@color/neko_dark_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/neko_dark_on_surface_variant</item>
+        <item name="colorOutline">@color/neko_dark_outline</item>
+        
+        <!-- Status bar and navigation bar -->
+        <item name="android:statusBarColor">@color/neko_dark_primary</item>
+        <item name="android:navigationBarColor">@color/neko_dark_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <!-- Shape styles -->
+    <style name="ShapeAppearance.NekoTTS.SmallComponent" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="ShapeAppearance.NekoTTS.MediumComponent" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
+    <style name="ShapeAppearance.NekoTTS.LargeComponent" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <!-- Typography styles -->
+    <style name="TextAppearance.NekoTTS" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.NekoTTS.Headline1" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontWeight">700</item>
+    </style>
+
+    <style name="TextAppearance.NekoTTS.Headline2" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontWeight">600</item>
+    </style>
+
+    <style name="TextAppearance.NekoTTS.Headline3" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontWeight">600</item>
+    </style>
+
+    <style name="TextAppearance.NekoTTS.Headline4" parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontWeight">600</item>
+    </style>
+
+    <style name="TextAppearance.NekoTTS.Headline5" parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontWeight">500</item>
+    </style>
+
+    <style name="TextAppearance.NekoTTS.Headline6" parent="TextAppearance.Material3.TitleSmall">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontWeight">500</item>
+    </style>
+
+    <!-- Button styles -->
+    <style name="Widget.NekoTTS.Button" parent="Widget.Material3.Button">
+        <item name="shapeAppearance">@style/ShapeAppearance.NekoTTS.MediumComponent</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <style name="Widget.NekoTTS.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="shapeAppearance">@style/ShapeAppearance.NekoTTS.MediumComponent</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <!-- Card styles -->
+    <style name="Widget.NekoTTS.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="shapeAppearance">@style/ShapeAppearance.NekoTTS.MediumComponent</item>
+        <item name="cardElevation">4dp</item>
+    </style>
+
+    <!-- Text field styles -->
+    <style name="Widget.NekoTTS.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="shapeAppearance">@style/ShapeAppearance.NekoTTS.MediumComponent</item>
+        <item name="boxStrokeColor">@color/neko_light_primary</item>
+        <item name="hintTextColor">@color/neko_light_on_surface_variant</item>
+    </style>
+
+</resources>

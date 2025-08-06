@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+   Sample data extraction rules file; uncomment and customize as necessary.
+   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
+   for details.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Include user preferences and settings -->
+        <include domain="sharedpref" path="." />
+        
+        <!-- Exclude sensitive data -->
+        <exclude domain="sharedpref" path="device_preferences.xml" />
+        
+        <!-- Include custom model files if user has added them -->
+        <include domain="file" path="models/" />
+        
+        <!-- Exclude cache and temporary files -->
+        <exclude domain="file" path="cache/" />
+        <exclude domain="file" path="temp/" />
+    </cloud-backup>
+    
+    <!-- These rules control whether files in certain domains are backed up when
+    the user turns on device-to-device transfer for your app. -->
+    <device-transfer>
+        <!-- Include user preferences and settings -->
+        <include domain="sharedpref" path="." />
+        
+        <!-- Include custom model files if user has added them -->
+        <include domain="file" path="models/" />
+        
+        <!-- Exclude cache and temporary files -->
+        <exclude domain="file" path="cache/" />
+        <exclude domain="file" path="temp/" />
+    </device-transfer>
+</data-extraction-rules>
