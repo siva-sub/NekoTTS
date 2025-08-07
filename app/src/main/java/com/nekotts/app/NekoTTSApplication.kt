@@ -80,25 +80,49 @@ class NekoTTSApplication : Application() {
     
     private suspend fun initializeONNXRuntime() {
         try {
-            Log.d(TAG, "Initializing ONNX Runtime...")
-            // ONNX Runtime initialization would happen here
-            // This is typically done lazily when first needed
-            Log.d(TAG, "ONNX Runtime initialization scheduled")
+            Log.d(TAG, "Initializing ONNX Runtime and loading models...")
+            
+            // Initialize the ONNX model loader with models
+            val modelLoader = AppSingletons.getONNXModelLoader()
+            val initialized = modelLoader.initialize()
+            
+            if (initialized) {
+                Log.d(TAG, "ONNX Runtime initialized successfully")
+                val modelInfo = modelLoader.getModelInfo()
+                Log.d(TAG, "Model info: $modelInfo")
+            } else {
+                Log.e(TAG, "Failed to initialize ONNX Runtime - models may not be available")
+            }
+            
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize ONNX Runtime", e)
-            throw e
+            // Don't throw - allow app to run with fallback synthetic audio
         }
     }
     
     private suspend fun initializeTTSEngines() {
         try {
             Log.d(TAG, "Initializing TTS engines...")
-            // TTS engine initialization would happen here
-            // This includes loading models and voices
-            Log.d(TAG, "TTS engines initialization scheduled")
+            
+            // Ensure models are downloaded if needed
+            val modelDownloader = AppSingletons.getModelDownloader()
+            val modelsAvailable = modelDownloader.ensureModelsAvailable()
+            
+            if (modelsAvailable) {
+                Log.d(TAG, "TTS models are available")
+            } else {
+                Log.w(TAG, "Some TTS models are missing - will use synthetic fallback")
+            }
+            
+            // Initialize engines (they will use whatever models are available)
+            val kittenEngine = AppSingletons.getKittenEngine()
+            val kokoroEngine = AppSingletons.getKokoroEngine()
+            
+            Log.d(TAG, "TTS engines initialized")
+            
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize TTS engines", e)
-            throw e
+            // Don't throw - allow app to run with fallback
         }
     }
     

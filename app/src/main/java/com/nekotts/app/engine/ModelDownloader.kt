@@ -18,12 +18,12 @@ class ModelDownloader(private val context: Context) {
     companion object {
         private const val TAG = "ModelDownloader"
         
-        // HuggingFace model URLs
-        private const val KITTEN_MODEL_URL = "https://huggingface.co/KittenML/kitten-tts-nano-0.1/resolve/main/kitten_tts_nano_v0_1.onnx"
-        private const val KITTEN_VOICES_URL = "https://huggingface.co/KittenML/kitten-tts-nano-0.1/resolve/main/voices.npz"
+        // HuggingFace model URLs - Following kokoro-web pattern
+        private const val KOKORO_BASE_URL = "https://huggingface.co/onnx-community/Kokoro-82M-ONNX/resolve/main/onnx"
+        private const val KOKORO_VOICES_BASE_URL = "https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/main/voices"
         
-        private const val KOKORO_MODEL_URL = "https://huggingface.co/onnx-community/Kokoro-82M-ONNX/resolve/main/onnx/model_q8f16.onnx"
-        private const val KOKORO_VOICES_URL = "https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/main/voices-v1.0.bin"
+        // Kokoro has multiple quantization options - we'll use q8f16 for best quality/size tradeoff
+        private const val KOKORO_MODEL_URL = "$KOKORO_BASE_URL/model_q8f16.onnx"
         
         private const val CONNECT_TIMEOUT = 30000 // 30 seconds
         private const val READ_TIMEOUT = 60000 // 60 seconds
@@ -49,45 +49,20 @@ class ModelDownloader(private val context: Context) {
             
             var allAvailable = true
             
-            // Check Kitten model
-            if (!isModelAvailable("kitten_tts_nano_v0_1.onnx")) {
-                Log.d(TAG, "Kitten model not available, attempting download")
-                allAvailable = allAvailable && downloadModel(
-                    KITTEN_MODEL_URL,
-                    File(modelsDir, "kitten_tts_nano_v0_1.onnx"),
-                    "Kitten TTS Model"
-                )
+            // Kitten model and voices are bundled in assets, no need to download
+            val kittenModelAvailable = isModelAvailable("kitten_tts_nano_v0_1.onnx")
+            val kittenVoicesAvailable = isModelAvailable("voices.npz")
+            
+            if (kittenModelAvailable && kittenVoicesAvailable) {
+                Log.d(TAG, "Kitten TTS model and voices available from assets")
+            } else {
+                Log.w(TAG, "Kitten model or voices missing from assets")
+                allAvailable = false
             }
             
-            // Check Kitten voices
-            if (!isModelAvailable("voices.npz")) {
-                Log.d(TAG, "Kitten voices not available, attempting download")
-                allAvailable = allAvailable && downloadModel(
-                    KITTEN_VOICES_URL,
-                    File(modelsDir, "voices.npz"),
-                    "Kitten Voices"
-                )
-            }
-            
-            // Check Kokoro model (optional, as it's large)
-            if (!isModelAvailable("kokoro-v1.0.onnx")) {
-                Log.d(TAG, "Kokoro model not available - using lightweight version")
-                allAvailable = allAvailable && downloadModel(
-                    KOKORO_MODEL_URL,
-                    File(modelsDir, "kokoro-v1.0.onnx"),
-                    "Kokoro TTS Model"
-                )
-            }
-            
-            // Check Kokoro voices
-            if (!isModelAvailable("voices-v1.0.bin")) {
-                Log.d(TAG, "Kokoro voices not available, attempting download")
-                allAvailable = allAvailable && downloadModel(
-                    KOKORO_VOICES_URL,
-                    File(modelsDir, "voices-v1.0.bin"),
-                    "Kokoro Voices"
-                )
-            }
+            // Kokoro model is downloaded on-demand when a Kokoro voice is selected
+            // We don't download it here to keep the app size small
+            Log.d(TAG, "Kokoro model will be downloaded on-demand when needed")
             
             Log.d(TAG, "Model availability check complete: $allAvailable")
             allAvailable
@@ -190,51 +165,88 @@ class ModelDownloader(private val context: Context) {
     }
     
     /**
-     * Download models with progress callback
+     * Download Kokoro model on-demand
      */
-    suspend fun downloadModelsWithProgress(callback: DownloadCallback): Boolean = withContext(Dispatchers.IO) {
+    suspend fun downloadKokoroModel(callback: DownloadCallback? = null): Boolean = withContext(Dispatchers.IO) {
         try {
             val modelsDir = File(context.filesDir, "models")
             if (!modelsDir.exists()) {
                 modelsDir.mkdirs()
             }
             
-            val models = listOf(
-                Triple("kitten_tts_nano_v0_1.onnx", KITTEN_MODEL_URL, "Kitten TTS Model"),
-                Triple("voices.npz", KITTEN_VOICES_URL, "Kitten Voices"),
-                Triple("kokoro-v1.0.onnx", KOKORO_MODEL_URL, "Kokoro TTS Model"),
-                Triple("voices-v1.0.bin", KOKORO_VOICES_URL, "Kokoro Voices")
-            )
-            
-            var allSuccessful = true
-            
-            models.forEachIndexed { index, (fileName, url, displayName) ->
-                if (!isModelAvailable(fileName)) {
-                    val success = downloadModel(
-                        url,
-                        File(modelsDir, fileName),
-                        displayName,
-                        object : DownloadCallback {
-                            override fun onProgress(downloaded: Long, total: Long) {
-                                callback.onProgress(downloaded, total)
-                            }
-                            
-                            override fun onComplete(success: Boolean, message: String) {
-                                callback.onComplete(success, "$displayName: $message")
-                            }
-                        }
-                    )
-                    allSuccessful = allSuccessful && success
-                }
+            // Check if already available
+            if (isModelAvailable("kokoro-v1.0.onnx")) {
+                Log.d(TAG, "Kokoro model already available")
+                callback?.onComplete(true, "Kokoro model already available")
+                return@withContext true
             }
             
-            allSuccessful
+            Log.d(TAG, "Downloading Kokoro model from HuggingFace...")
+            return@withContext downloadModel(
+                KOKORO_MODEL_URL,
+                File(modelsDir, "kokoro-v1.0.onnx"),
+                "Kokoro TTS Model",
+                callback
+            )
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error downloading models with progress", e)
-            callback.onComplete(false, "Download failed: ${e.message}")
+            Log.e(TAG, "Error downloading Kokoro model", e)
+            callback?.onComplete(false, "Download failed: ${e.message}")
             false
         }
+    }
+    
+    /**
+     * Download individual Kokoro voice file
+     */
+    suspend fun downloadKokoroVoice(voiceId: String, callback: DownloadCallback? = null): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val voicesDir = File(context.filesDir, "voices")
+            if (!voicesDir.exists()) {
+                voicesDir.mkdirs()
+            }
+            
+            val voiceFile = File(voicesDir, "$voiceId.bin")
+            
+            // Check if already downloaded
+            if (voiceFile.exists() && voiceFile.length() > 0) {
+                Log.d(TAG, "Voice $voiceId already downloaded")
+                callback?.onComplete(true, "Voice already available")
+                return@withContext true
+            }
+            
+            // Download voice file following kokoro-web pattern
+            val voiceUrl = "$KOKORO_VOICES_BASE_URL/$voiceId.bin"
+            Log.d(TAG, "Downloading voice $voiceId from $voiceUrl")
+            
+            return@withContext downloadModel(
+                voiceUrl,
+                voiceFile,
+                "Voice: $voiceId",
+                callback
+            )
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error downloading voice $voiceId", e)
+            callback?.onComplete(false, "Download failed: ${e.message}")
+            false
+        }
+    }
+    
+    /**
+     * Check if a Kokoro voice is downloaded
+     */
+    fun isKokoroVoiceDownloaded(voiceId: String): Boolean {
+        val voiceFile = File(context.filesDir, "voices/$voiceId.bin")
+        return voiceFile.exists() && voiceFile.length() > 0
+    }
+    
+    /**
+     * Get path to a downloaded Kokoro voice
+     */
+    fun getKokoroVoicePath(voiceId: String): String? {
+        val voiceFile = File(context.filesDir, "voices/$voiceId.bin")
+        return if (voiceFile.exists()) voiceFile.absolutePath else null
     }
     
     /**
