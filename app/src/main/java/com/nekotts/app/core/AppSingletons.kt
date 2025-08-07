@@ -92,6 +92,11 @@ object AppSingletons {
             ?: throw IllegalStateException("AppSingletons not initialized. Call init() first.")
     }
     
+    /**
+     * Get the application context
+     */
+    fun getContext(): Context = requireContext()
+    
     // Public accessors
     fun getSettingsManager(): SettingsManager = _settingsManager
     fun getSettingsRepository(): SettingsRepository = _settingsRepository

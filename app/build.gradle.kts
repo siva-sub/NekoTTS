@@ -1,8 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    //alias(libs.plugins.hilt.android.plugin)
+    // Remove kapt for now as it's causing issues
     //alias(libs.plugins.kotlin.kapt)
+    //alias(libs.plugins.hilt.android.plugin)
 }
 
 android {
@@ -115,6 +116,7 @@ dependencies {
     // Room Database
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    // Temporarily disable Room compiler until kapt is fixed
     //kapt(libs.androidx.room.compiler)
     
     // Work Manager
