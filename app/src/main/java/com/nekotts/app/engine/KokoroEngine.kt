@@ -29,7 +29,7 @@ class KokoroEngine(
         val gender: String
     )
     
-    // All 54 supported Kokoro voices
+    // Simplified popular Kokoro voices
     private val kokoroVoices = listOf(
         Voice("af", "Afrikaans Female", "af", "ZA", "female"),
         Voice("am", "Amharic Female", "am", "ET", "female"),

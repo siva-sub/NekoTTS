@@ -57,7 +57,7 @@ class NekoTTSService : TextToSpeechService() {
         
         // Return appropriate default voice based on language
         return when (lang) {
-            "en" -> "ktn_f1" // Default to Kitten TTS for English
+            "en" -> "expr-voice-2-f" // Default to Kitten TTS for English (updated voice ID)
             else -> lang // Use language code as voice ID for Kokoro voices
         }
     }

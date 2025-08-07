@@ -48,37 +48,44 @@ class ProcessTextActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize dependencies from singleton manager
-        voiceRepository = AppSingletons.getVoiceRepository()
-        settingsRepository = AppSingletons.getSettingsRepository()
-        ttsSessionManager = AppSingletons.getTTSSessionManager()
-        
-        Log.d(TAG, "ProcessTextActivity started")
-        
-        // Get the selected text from the intent
-        val selectedText = intent.getCharSequenceExtra(EXTRA_PROCESS_TEXT)?.toString()
-        
-        if (selectedText.isNullOrEmpty()) {
-            Log.w(TAG, "No text provided for processing")
-            showToast("No text selected")
+        try {
+            // Initialize dependencies from singleton manager with error handling
+            voiceRepository = AppSingletons.getVoiceRepository()
+            settingsRepository = AppSingletons.getSettingsRepository()
+            ttsSessionManager = AppSingletons.getTTSSessionManager()
+            
+            Log.d(TAG, "ProcessTextActivity started")
+            
+            // Get the selected text from the intent
+            val selectedText = intent.getCharSequenceExtra(EXTRA_PROCESS_TEXT)?.toString()
+            
+            if (selectedText.isNullOrEmpty()) {
+                Log.w(TAG, "No text provided for processing")
+                showToast("No text selected")
+                finish()
+                return
+            }
+            
+            if (selectedText.length > Constants.MAX_TEXT_LENGTH) {
+                Log.w(TAG, "Text too long: ${selectedText.length} characters")
+                showToast("Text too long (max ${Constants.MAX_TEXT_LENGTH} characters)")
+                finish()
+                return
+            }
+            
+            Log.d(TAG, "Processing text: ${selectedText.take(100)}...")
+            
+            // Show floating processing dialog
+            showProcessingDialog(selectedText)
+            
+            // Process the text with TTS
+            processText(selectedText)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing ProcessTextActivity", e)
+            showToast("TTS service not available: ${e.message}")
             finish()
-            return
         }
-        
-        if (selectedText.length > Constants.MAX_TEXT_LENGTH) {
-            Log.w(TAG, "Text too long: ${selectedText.length} characters")
-            showToast("Text too long (max ${Constants.MAX_TEXT_LENGTH} characters)")
-            finish()
-            return
-        }
-        
-        Log.d(TAG, "Processing text: ${selectedText.take(100)}...")
-        
-        // Show floating processing dialog
-        showProcessingDialog(selectedText)
-        
-        // Process the text with TTS
-        processText(selectedText)
     }
     
     private fun showProcessingDialog(text: String) {

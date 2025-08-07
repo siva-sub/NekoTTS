@@ -28,7 +28,7 @@ object Constants {
     const val CACHE_DIR = "cache"
     
     // Default Settings
-    const val DEFAULT_VOICE_ID = "ktn_f1"
+    const val DEFAULT_VOICE_ID = "expr-voice-2-f"
     const val DEFAULT_SPEECH_SPEED = 1.0f
     const val DEFAULT_SPEECH_PITCH = 1.0f
     const val MIN_SPEECH_SPEED = 0.5f

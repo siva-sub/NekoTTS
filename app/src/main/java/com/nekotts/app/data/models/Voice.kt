@@ -101,111 +101,111 @@ enum class VoiceCharacteristic(val displayName: String, val emoji: String) {
 }
 
 /**
- * Predefined voices for Kitten engine
+ * Predefined voices for Kitten engine - based on actual available models
  */
 object KittenVoices {
     val voices = listOf(
         Voice(
-            id = "ktn_f1",
-            name = "ktn_f1",
-            displayName = "Mimi",
+            id = "expr-voice-2-f",
+            name = "expr-voice-2-f",
+            displayName = "Luna (Female)",
             language = "en",
             languageName = "English",
             gender = VoiceGender.FEMALE,
             engine = VoiceEngine.KITTEN,
-            description = "A cute and energetic female voice",
-            characteristics = listOf(VoiceCharacteristic.CUTE, VoiceCharacteristic.ENERGETIC),
+            description = "Expressive female voice",
+            characteristics = listOf(VoiceCharacteristic.SOFT, VoiceCharacteristic.CALM),
             quality = VoiceQuality.STANDARD,
             isDefault = true,
             isDownloaded = true
         ),
         Voice(
-            id = "ktn_f2",
-            name = "ktn_f2",
-            displayName = "Luna",
-            language = "en",
-            languageName = "English",
-            gender = VoiceGender.FEMALE,
-            engine = VoiceEngine.KITTEN,
-            description = "A soft and calm female voice",
-            characteristics = listOf(VoiceCharacteristic.SOFT, VoiceCharacteristic.CALM),
-            quality = VoiceQuality.STANDARD,
-            isDownloaded = true
-        ),
-        Voice(
-            id = "ktn_f3",
-            name = "ktn_f3",
-            displayName = "Aria",
-            language = "en",
-            languageName = "English",
-            gender = VoiceGender.FEMALE,
-            engine = VoiceEngine.KITTEN,
-            description = "A cheerful and youthful female voice",
-            characteristics = listOf(VoiceCharacteristic.CHEERFUL, VoiceCharacteristic.YOUTHFUL),
-            quality = VoiceQuality.STANDARD,
-            isDownloaded = true
-        ),
-        Voice(
-            id = "ktn_f4",
-            name = "ktn_f4",
-            displayName = "Nova",
-            language = "en",
-            languageName = "English",
-            gender = VoiceGender.FEMALE,
-            engine = VoiceEngine.KITTEN,
-            description = "A mature and serious female voice",
-            characteristics = listOf(VoiceCharacteristic.MATURE, VoiceCharacteristic.SERIOUS),
-            quality = VoiceQuality.STANDARD,
-            isDownloaded = true
-        ),
-        Voice(
-            id = "ktn_m1",
-            name = "ktn_m1",
-            displayName = "Felix",
+            id = "expr-voice-2-m",
+            name = "expr-voice-2-m",
+            displayName = "Felix (Male)",
             language = "en",
             languageName = "English",
             gender = VoiceGender.MALE,
             engine = VoiceEngine.KITTEN,
-            description = "A strong and confident male voice",
+            description = "Expressive male voice",
             characteristics = listOf(VoiceCharacteristic.STRONG, VoiceCharacteristic.DEEP),
             quality = VoiceQuality.STANDARD,
             isDownloaded = true
         ),
         Voice(
-            id = "ktn_m2",
-            name = "ktn_m2",
-            displayName = "Oliver",
+            id = "expr-voice-3-f",
+            name = "expr-voice-3-f",
+            displayName = "Aria (Female)",
+            language = "en",
+            languageName = "English",
+            gender = VoiceGender.FEMALE,
+            engine = VoiceEngine.KITTEN,
+            description = "Cheerful female voice",
+            characteristics = listOf(VoiceCharacteristic.CHEERFUL, VoiceCharacteristic.YOUTHFUL),
+            quality = VoiceQuality.STANDARD,
+            isDownloaded = true
+        ),
+        Voice(
+            id = "expr-voice-3-m",
+            name = "expr-voice-3-m",
+            displayName = "Oliver (Male)",
             language = "en",
             languageName = "English",
             gender = VoiceGender.MALE,
             engine = VoiceEngine.KITTEN,
-            description = "A calm and mature male voice",
+            description = "Calm male voice",
             characteristics = listOf(VoiceCharacteristic.CALM, VoiceCharacteristic.MATURE),
             quality = VoiceQuality.STANDARD,
             isDownloaded = true
         ),
         Voice(
-            id = "ktn_m3",
-            name = "ktn_m3",
-            displayName = "Max",
+            id = "expr-voice-4-f",
+            name = "expr-voice-4-f",
+            displayName = "Nova (Female)",
+            language = "en",
+            languageName = "English",
+            gender = VoiceGender.FEMALE,
+            engine = VoiceEngine.KITTEN,
+            description = "Mature female voice",
+            characteristics = listOf(VoiceCharacteristic.MATURE, VoiceCharacteristic.SERIOUS),
+            quality = VoiceQuality.STANDARD,
+            isDownloaded = true
+        ),
+        Voice(
+            id = "expr-voice-4-m",
+            name = "expr-voice-4-m",
+            displayName = "Max (Male)",
             language = "en",
             languageName = "English",
             gender = VoiceGender.MALE,
             engine = VoiceEngine.KITTEN,
-            description = "A cheerful and energetic male voice",
+            description = "Energetic male voice",
             characteristics = listOf(VoiceCharacteristic.CHEERFUL, VoiceCharacteristic.ENERGETIC),
             quality = VoiceQuality.STANDARD,
             isDownloaded = true
         ),
         Voice(
-            id = "ktn_n1",
-            name = "ktn_n1",
-            displayName = "Sage",
+            id = "expr-voice-5-f",
+            name = "expr-voice-5-f",
+            displayName = "Mimi (Female)",
             language = "en",
             languageName = "English",
-            gender = VoiceGender.NEUTRAL,
+            gender = VoiceGender.FEMALE,
             engine = VoiceEngine.KITTEN,
-            description = "A neutral and balanced voice",
+            description = "Cute female voice",
+            characteristics = listOf(VoiceCharacteristic.CUTE, VoiceCharacteristic.SOFT),
+            quality = VoiceQuality.STANDARD,
+            isDownloaded = true
+        ),
+        Voice(
+            id = "expr-voice-5-m",
+            name = "expr-voice-5-m",
+            displayName = "Sage (Male)",
+            language = "en",
+            languageName = "English",
+            gender = VoiceGender.MALE,
+            engine = VoiceEngine.KITTEN,
+            description = "Balanced male voice",
             characteristics = listOf(VoiceCharacteristic.CALM, VoiceCharacteristic.SOFT),
             quality = VoiceQuality.STANDARD,
             isDownloaded = true
@@ -214,20 +214,20 @@ object KittenVoices {
 }
 
 /**
- * Predefined voices for Kokoro engine - all 54 supported voices
+ * Predefined voices for Kokoro engine - simplified popular voices
  */
 object KokoroVoices {
     val voices = listOf(
-        // English (US) voices
+        // Popular English voices
         Voice(
             id = "af_heart", 
             name = "af_heart", 
-            displayName = "Heart (Afrikaans F)", 
-            language = "af", 
-            languageName = "Afrikaans", 
+            displayName = "Heart (English F)", 
+            language = "en", 
+            languageName = "English", 
             gender = VoiceGender.FEMALE, 
             engine = VoiceEngine.KOKORO, 
-            description = "Warm Afrikaans female voice", 
+            description = "Warm English female voice", 
             characteristics = listOf(VoiceCharacteristic.SOFT), 
             quality = VoiceQuality.HIGH, 
             isDownloaded = true
@@ -235,105 +235,25 @@ object KokoroVoices {
         Voice(
             id = "af_bella", 
             name = "af_bella", 
-            displayName = "Bella (Afrikaans F)", 
-            language = "af", 
-            languageName = "Afrikaans", 
+            displayName = "Bella (English F)", 
+            language = "en", 
+            languageName = "English", 
             gender = VoiceGender.FEMALE, 
             engine = VoiceEngine.KOKORO, 
-            description = "Beautiful Afrikaans voice", 
+            description = "Beautiful English voice", 
             characteristics = listOf(VoiceCharacteristic.CHEERFUL), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        Voice(
-            id = "am_fenrir", 
-            name = "am_fenrir", 
-            displayName = "Fenrir (Amharic M)", 
-            language = "am", 
-            languageName = "Amharic", 
-            gender = VoiceGender.MALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Strong Amharic male voice", 
-            characteristics = listOf(VoiceCharacteristic.DEEP), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        Voice(
-            id = "bf_emma", 
-            name = "bf_emma", 
-            displayName = "Emma (British F)", 
-            language = "en-gb", 
-            languageName = "English (UK)", 
-            gender = VoiceGender.FEMALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Elegant British female voice", 
-            characteristics = listOf(VoiceCharacteristic.MATURE), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        Voice(
-            id = "bm_george", 
-            name = "bm_george", 
-            displayName = "George (British M)", 
-            language = "en-gb", 
-            languageName = "English (UK)", 
-            gender = VoiceGender.MALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Distinguished British male voice", 
-            characteristics = listOf(VoiceCharacteristic.SERIOUS), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        Voice(
-            id = "bm_lewis", 
-            name = "bm_lewis", 
-            displayName = "Lewis (British M)", 
-            language = "en-gb", 
-            languageName = "English (UK)", 
-            gender = VoiceGender.MALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Smooth British male voice", 
-            characteristics = listOf(VoiceCharacteristic.CALM), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        
-        // American English voices
-        Voice(
-            id = "af_alloy", 
-            name = "af_alloy", 
-            displayName = "Alloy (American F)", 
-            language = "en-us", 
-            languageName = "English (US)", 
-            gender = VoiceGender.FEMALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Clear American female voice", 
-            characteristics = listOf(VoiceCharacteristic.CHEERFUL), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        Voice(
-            id = "af_sarah", 
-            name = "af_sarah", 
-            displayName = "Sarah (American F)", 
-            language = "en-us", 
-            languageName = "English (US)", 
-            gender = VoiceGender.FEMALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Natural American female voice", 
-            characteristics = listOf(VoiceCharacteristic.SOFT), 
             quality = VoiceQuality.HIGH, 
             isDownloaded = true
         ),
         Voice(
             id = "am_adam", 
             name = "am_adam", 
-            displayName = "Adam (American M)", 
-            language = "en-us", 
-            languageName = "English (US)", 
+            displayName = "Adam (English M)", 
+            language = "en", 
+            languageName = "English", 
             gender = VoiceGender.MALE, 
             engine = VoiceEngine.KOKORO, 
-            description = "Confident American male voice", 
+            description = "Confident English male voice", 
             characteristics = listOf(VoiceCharacteristic.STRONG), 
             quality = VoiceQuality.HIGH, 
             isDownloaded = true
@@ -341,100 +261,18 @@ object KokoroVoices {
         Voice(
             id = "am_michael", 
             name = "am_michael", 
-            displayName = "Michael (American M)", 
-            language = "en-us", 
-            languageName = "English (US)", 
+            displayName = "Michael (English M)", 
+            language = "en", 
+            languageName = "English", 
             gender = VoiceGender.MALE, 
             engine = VoiceEngine.KOKORO, 
-            description = "Professional American male voice", 
+            description = "Professional English male voice", 
             characteristics = listOf(VoiceCharacteristic.MATURE), 
             quality = VoiceQuality.HIGH, 
             isDownloaded = true
         ),
         
-        // Japanese voices
-        Voice(
-            id = "jf_alpha", 
-            name = "jf_alpha", 
-            displayName = "Alpha (Japanese F)", 
-            language = "ja", 
-            languageName = "Japanese", 
-            gender = VoiceGender.FEMALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Gentle Japanese female voice", 
-            characteristics = listOf(VoiceCharacteristic.CUTE), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        Voice(
-            id = "jf_ayako", 
-            name = "jf_ayako", 
-            displayName = "Ayako (Japanese F)", 
-            language = "ja", 
-            languageName = "Japanese", 
-            gender = VoiceGender.FEMALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Sweet Japanese female voice", 
-            characteristics = listOf(VoiceCharacteristic.CHEERFUL), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        Voice(
-            id = "jm_kumo", 
-            name = "jm_kumo", 
-            displayName = "Kumo (Japanese M)", 
-            language = "ja", 
-            languageName = "Japanese", 
-            gender = VoiceGender.MALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Deep Japanese male voice", 
-            characteristics = listOf(VoiceCharacteristic.DEEP), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        
-        // Chinese voices  
-        Voice(
-            id = "zf_xiaobei", 
-            name = "zf_xiaobei", 
-            displayName = "Xiaobei (Chinese F)", 
-            language = "zh", 
-            languageName = "Chinese", 
-            gender = VoiceGender.FEMALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Melodic Chinese female voice", 
-            characteristics = listOf(VoiceCharacteristic.SOFT), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        Voice(
-            id = "zm_yunxi", 
-            name = "zm_yunxi", 
-            displayName = "Yunxi (Chinese M)", 
-            language = "zh", 
-            languageName = "Chinese", 
-            gender = VoiceGender.MALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Clear Chinese male voice", 
-            characteristics = listOf(VoiceCharacteristic.CALM), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
-        
-        // Spanish voices
-        Voice(
-            id = "es_diego", 
-            name = "es_diego", 
-            displayName = "Diego (Spanish M)", 
-            language = "es", 
-            languageName = "Spanish", 
-            gender = VoiceGender.MALE, 
-            engine = VoiceEngine.KOKORO, 
-            description = "Warm Spanish male voice", 
-            characteristics = listOf(VoiceCharacteristic.ENERGETIC), 
-            quality = VoiceQuality.HIGH, 
-            isDownloaded = true
-        ),
+        // A few international voices
         Voice(
             id = "es_maria", 
             name = "es_maria", 
@@ -448,27 +286,44 @@ object KokoroVoices {
             quality = VoiceQuality.HIGH, 
             isDownloaded = true
         ),
-        
-        // French voices (truncated for brevity - use first few as template)
         Voice(
-            id = "fr_amelie", name = "fr_amelie", displayName = "Amélie (French F)", 
-            language = "fr", languageName = "French", gender = VoiceGender.FEMALE, 
-            engine = VoiceEngine.KOKORO, description = "Elegant French female voice", 
-            characteristics = listOf(VoiceCharacteristic.SOFT), quality = VoiceQuality.HIGH, isDownloaded = true
+            id = "fr_amelie", 
+            name = "fr_amelie", 
+            displayName = "Amélie (French F)", 
+            language = "fr", 
+            languageName = "French", 
+            gender = VoiceGender.FEMALE, 
+            engine = VoiceEngine.KOKORO, 
+            description = "Elegant French female voice", 
+            characteristics = listOf(VoiceCharacteristic.SOFT), 
+            quality = VoiceQuality.HIGH, 
+            isDownloaded = true
         ),
         Voice(
-            id = "fr_pierre", name = "fr_pierre", displayName = "Pierre (French M)", 
-            language = "fr", languageName = "French", gender = VoiceGender.MALE, 
-            engine = VoiceEngine.KOKORO, description = "Distinguished French male voice", 
-            characteristics = listOf(VoiceCharacteristic.MATURE), quality = VoiceQuality.HIGH, isDownloaded = true
+            id = "jf_ayako", 
+            name = "jf_ayako", 
+            displayName = "Ayako (Japanese F)", 
+            language = "ja", 
+            languageName = "Japanese", 
+            gender = VoiceGender.FEMALE, 
+            engine = VoiceEngine.KOKORO, 
+            description = "Sweet Japanese female voice", 
+            characteristics = listOf(VoiceCharacteristic.CUTE), 
+            quality = VoiceQuality.HIGH, 
+            isDownloaded = true
         ),
-        
-        // Simplified voice list for compilation - add more voices later if needed
         Voice(
-            id = "en_sample", name = "en_sample", displayName = "Sample English", 
-            language = "en", languageName = "English", gender = VoiceGender.NEUTRAL, 
-            engine = VoiceEngine.KOKORO, description = "Sample voice for testing", 
-            characteristics = listOf(VoiceCharacteristic.CALM), quality = VoiceQuality.STANDARD, isDownloaded = true
+            id = "zf_xiaobei", 
+            name = "zf_xiaobei", 
+            displayName = "Xiaobei (Chinese F)", 
+            language = "zh", 
+            languageName = "Chinese", 
+            gender = VoiceGender.FEMALE, 
+            engine = VoiceEngine.KOKORO, 
+            description = "Melodic Chinese female voice", 
+            characteristics = listOf(VoiceCharacteristic.SOFT), 
+            quality = VoiceQuality.HIGH, 
+            isDownloaded = true
         )
     )
 }

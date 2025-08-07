@@ -28,60 +28,60 @@ class KittenEngine(
         val description: String
     )
     
-    // 8 Kitten TTS voices with different styles
+    // 8 Kitten TTS voices with different styles - using actual model voice IDs
     private val kittenVoices = listOf(
         Voice(
-            id = "ktn_f1",
-            name = "Kitten Female 1",
-            gender = "female",
-            style = "cheerful",
-            description = "A bright and cheerful female voice with youthful energy"
-        ),
-        Voice(
-            id = "ktn_f2",
-            name = "Kitten Female 2",
+            id = "expr-voice-2-f",
+            name = "Luna",
             gender = "female",
             style = "gentle",
             description = "A soft and gentle female voice, perfect for calm narration"
         ),
         Voice(
-            id = "ktn_f3",
-            name = "Kitten Female 3",
-            gender = "female",
-            style = "energetic",
-            description = "An energetic and dynamic female voice with enthusiasm"
-        ),
-        Voice(
-            id = "ktn_f4",
-            name = "Kitten Female 4",
-            gender = "female",
-            style = "calm",
-            description = "A calm and soothing female voice for relaxation"
-        ),
-        Voice(
-            id = "ktn_m1",
-            name = "Kitten Male 1",
+            id = "expr-voice-2-m",
+            name = "Felix",
             gender = "male",
             style = "friendly",
             description = "A warm and friendly male voice with approachable tone"
         ),
         Voice(
-            id = "ktn_m2",
-            name = "Kitten Male 2",
+            id = "expr-voice-3-f",
+            name = "Aria",
+            gender = "female",
+            style = "energetic",
+            description = "An energetic and dynamic female voice with enthusiasm"
+        ),
+        Voice(
+            id = "expr-voice-3-m",
+            name = "Oliver",
             gender = "male",
             style = "professional",
             description = "A professional and authoritative male voice for business"
         ),
         Voice(
-            id = "ktn_m3",
-            name = "Kitten Male 3",
+            id = "expr-voice-4-f",
+            name = "Nova",
+            gender = "female",
+            style = "calm",
+            description = "A calm and soothing female voice for relaxation"
+        ),
+        Voice(
+            id = "expr-voice-4-m",
+            name = "Max",
             gender = "male",
             style = "warm",
             description = "A warm and comforting male voice with emotional depth"
         ),
         Voice(
-            id = "ktn_m4",
-            name = "Kitten Male 4",
+            id = "expr-voice-5-f",
+            name = "Mimi",
+            gender = "female",
+            style = "cheerful",
+            description = "A bright and cheerful female voice with youthful energy"
+        ),
+        Voice(
+            id = "expr-voice-5-m",
+            name = "Sage",
             gender = "male",
             style = "confident",
             description = "A confident and strong male voice with clear articulation"
@@ -210,53 +210,80 @@ class KittenEngine(
             val session = modelLoader.getKittenSession() ?: return@withContext null
             val ortEnv = modelLoader.getEnvironment() ?: return@withContext null
             
-            // Prepare input tensors
+            Log.d(TAG, "Synthesizing ${tokens.size} tokens with voice embedding size: ${voiceEmbedding.size}")
+            
+            // Prepare inputs following KittenTTS reference implementation
             val inputs = mutableMapOf<String, OnnxTensor>()
             
-            // Text tokens - use buffer for long arrays
+            // 1. Input IDs (phoneme tokens) - as int64 array with shape [1, sequence_length]
             val tokensArray = tokens.map { it.toLong() }.toLongArray()
-            val tokensBuffer = java.nio.LongBuffer.wrap(tokensArray)
             inputs["input_ids"] = OnnxTensor.createTensor(
                 ortEnv,
-                tokensBuffer,
+                java.nio.LongBuffer.wrap(tokensArray),
                 longArrayOf(1, tokens.size.toLong())
             )
             
-            // Voice embedding with proper shape [1, 256]
-            val voiceArray = Array(1) { voiceEmbedding }
-            inputs["speaker_embedding"] = OnnxTensor.createTensor(ortEnv, voiceArray)
+            // 2. Style embedding - voice embedding with proper shape [1, 256] 
+            // Following the reference: ref_s = self.voices[voice]
+            val styleArray = Array(1) { voiceEmbedding.copyOf() }
+            inputs["style"] = OnnxTensor.createTensor(ortEnv, styleArray)
             
-            // Speed control - use buffer for float arrays
-            val speedBuffer = java.nio.FloatBuffer.wrap(floatArrayOf(speed.coerceIn(0.5f, 2.0f)))
+            // 3. Speed control - single float value with shape [1]
+            val speedValue = speed.coerceIn(0.5f, 2.0f)
             inputs["speed"] = OnnxTensor.createTensor(
                 ortEnv,
-                speedBuffer,
+                java.nio.FloatBuffer.wrap(floatArrayOf(speedValue)),
                 longArrayOf(1)
             )
             
-            // Pitch control (if model supports it) - use buffer
-            val pitchBuffer = java.nio.FloatBuffer.wrap(floatArrayOf(pitch.coerceIn(0.5f, 2.0f)))
-            inputs["pitch"] = OnnxTensor.createTensor(
-                ortEnv,
-                pitchBuffer,
-                longArrayOf(1)
-            )
+            Log.d(TAG, "Running ONNX inference with inputs: tokens=${tokens.size}, style=${voiceEmbedding.size}, speed=${speedValue}")
             
-            // Emotion control (if model supports it) - use buffer
-            val emotionBuffer = java.nio.FloatBuffer.wrap(floatArrayOf(emotion.coerceIn(0.0f, 1.0f)))
-            inputs["emotion"] = OnnxTensor.createTensor(
-                ortEnv,
-                emotionBuffer,
-                longArrayOf(1)
-            )
-            
-            // Run inference
-            val result = modelLoader.runInference(session, inputs, "audio")
+            // Run inference - expecting waveform output
+            val outputs = session.run(inputs)
             
             // Clean up input tensors
             inputs.values.forEach { it.close() }
             
-            result?.audioData
+            if (outputs.size() == 0) {
+                Log.e(TAG, "No outputs from ONNX session")
+                return@withContext null
+            }
+            
+            // Get the first output (should be waveform)  
+            val outputTensor = outputs.iterator().next().value
+            val audioData = when (outputTensor) {
+                is OnnxTensor -> {
+                    val tensorData = outputTensor.floatBuffer
+                    val audioArray = FloatArray(tensorData.remaining())
+                    tensorData.get(audioArray)
+                    audioArray
+                }
+                else -> {
+                    Log.e(TAG, "Unexpected output tensor type: ${outputTensor.javaClass}")
+                    return@withContext null
+                }
+            }
+            
+            // Clean up output tensors
+            for ((_, tensor) in outputs) {
+                tensor.close()
+            }
+            
+            Log.d(TAG, "Generated ${audioData.size} audio samples")
+            
+            // Apply post-processing similar to reference implementation
+            // From KittenTTS: audio = outputs[0][5000:-10000] (trim silence)
+            val trimStart = minOf(5000, audioData.size / 10)
+            val trimEnd = minOf(10000, audioData.size / 10)
+            val trimmedAudio = if (audioData.size > trimStart + trimEnd) {
+                audioData.sliceArray(trimStart until (audioData.size - trimEnd))
+            } else {
+                audioData
+            }
+            
+            Log.d(TAG, "Audio trimmed from ${audioData.size} to ${trimmedAudio.size} samples")
+            
+            trimmedAudio
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to synthesize tokens", e)
@@ -296,7 +323,7 @@ class KittenEngine(
             // Test synthesis with a short text
             val testRequest = SynthesisRequest(
                 text = "Test",
-                voiceId = "ktn_f1",
+                voiceId = "expr-voice-2-f",
                 speed = 1.0f
             )
             
